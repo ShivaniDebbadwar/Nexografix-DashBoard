@@ -7,7 +7,7 @@ import ChangePassword from "./pages/ChangePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import ITimePage from "./pages/ITimePage";
 import WeeklyTimesheet from "./pages/WeeklyTimesheet";
-import IleaveAdmin from "./pages/iLeaveAdmin";
+import IleaveAdmin from "./pages/ILeaveAdmin";
 import IleaveEmployee from "./pages/iLeaveEmployee";
 import EmployeesDailyAttendance from "./components/EmployeesDailyAttendance";
 import TaskAssignForm from "./components/TaskAssignForm";
