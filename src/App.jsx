@@ -8,7 +8,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ITimePage from "./pages/ITimePage";
 import WeeklyTimesheet from "./pages/WeeklyTimesheet";
 import IleaveAdmin from "./pages/ILeaveAdmin";
-import IleaveEmployee from "./pages/iLeaveEmployee";
+import IleaveEmployee from "./pages/ILeaveEmployee";
 import EmployeesDailyAttendance from "./components/EmployeesDailyAttendance";
 import TaskAssignForm from "./components/TaskAssignForm";
 import TaskTracker from "./components/TaskTracker"; // Assuming you have a TaskTracker component
