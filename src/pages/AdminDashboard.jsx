@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import ProfileIcon from "../components/ProfileIcon";
 import axios from "axios";
+import logo from "../assets/Yourparagraphtext.svg"; // Adjust the path as needed
 
 /* ------------ Modal (isolated + memoized + portal) ------------ */
 const CreateEmployeeModal = React.memo(function CreateEmployeeModal({
@@ -721,19 +722,31 @@ export default function AttendanceSummary() {
     }}>
       {/* Navbar */}
       <nav style={{
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        padding: "10px 20px", background: darkMode ? "#FF9800" : "#FF9800", color: "#fff"
-      }}>
+        display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  padding: "10px 20px",
+  background: darkMode ? "#2eadf3" : "#2eadf3",
+  color: "#fff",
+  borderBottom: "1px solid black",   // ✅ Correct
+  boxShadow: darkMode ? "0 4px 8px rgba(0,0,0,0.2)" : "none",
+  position: "sticky",
+  top: 0,
+  zIndex: 1000 }}>
         <div style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-          <img src="https://tse2.mm.bing.net/th/id/OIP.EF4l7Q-Vsp_THD5S89s1KQAAAA?pid=Api&P=0&h=180" alt="NexoGrafix Logo" style={{ height: "30px", marginRight: "10px" }} />
-          <span style={{ fontWeight: "bold", fontSize: "18px" }}>NexoGrafix</span>
+          <img src={logo} style={{
+        height: "45px", // bigger logo
+        width: "auto",  // keep ratio
+        marginRight: "10px",
+        objectFit: "contain",
+      }} />
         </div>
         {/* <div style={{ fontWeight: "bold", fontSize: "18px", cursor: "pointer" }}>🏢 NexoGrafix</div> */}
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <Link to="/home" style={{ color: "#fff", textDecoration: "none" }}>Home</Link>
-          <Link to="/employee-details" style={{ color: "#fff", textDecoration: "none" }}>Employee Details</Link>
-          <Link to="/task-assign" style={{ color: "#fff", textDecoration: "none" }}>Assign Task</Link>
-          <Link to="/task-tracker" style={{ color: "#fff", textDecoration: "none" }}>Task Tracker</Link>
+          <Link to="/home" style={{ color: "#110e0ed8", textDecoration: "none", fontWeight: "bold"}}>Home</Link>
+          <Link to="/employee-details" style={{ color: "#110e0ed8", textDecoration: "none", fontWeight: "bold" }}>Employee Details</Link>
+          <Link to="/task-assign" style={{ color: "#110e0ed8", textDecoration: "none", fontWeight: "bold" }}>Assign Task</Link>
+          <Link to="/task-tracker" style={{ color: "#110e0ed8", textDecoration: "none", fontWeight: "bold"}}>Task Tracker</Link>
           <div style={styles.navRight}>
             <div ref={profileRef} style={{ position: "relative" }}>
               <button
@@ -779,7 +792,7 @@ export default function AttendanceSummary() {
       </nav>
 
 
-      <div style={{ padding: "20px" }}>
+      <div style={{ padding: "20px", backgroundColor: "#2eadf3" }}>
         <h2>👋 Welcome, {username}</h2>
 
         {/* Actions */}
@@ -789,6 +802,78 @@ export default function AttendanceSummary() {
             {darkMode ? "Light Mode" : "Dark Mode"}
           </button>
         </div>
+
+        <div
+        style={{
+          display: "flex",
+          justifyContent: "space-around",
+          marginTop: "20px",
+          padding: "10px 20px",
+        }}
+      >
+        {/* iTime Pending Approvals */}
+        <div
+          style={{
+            flex: 1,
+            margin: "10px",
+            padding: "20px",
+            borderRadius: "12px",
+            background: "#e3f2fd",
+            boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+            cursor: "pointer",
+            textAlign: "center",
+          }}
+          onClick={() => navigate("/itime-approvals")}
+        >
+          <h3 style={{ margin: "10px 0", color: "#1565c0" }}>iTime Approvals</h3>
+          <p style={{ fontSize: "22px", fontWeight: "bold", color: "#000" }}>
+            12 Pending
+          </p>
+          <small style={{ color: "#666" }}>Weekly count</small>
+        </div>
+
+        {/* Leave Approvals */}
+        <div
+          style={{
+            flex: 1,
+            margin: "10px",
+            padding: "20px",
+            borderRadius: "12px",
+            background: "#fce4ec",
+            boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+            cursor: "pointer",
+            textAlign: "center",
+          }}
+          onClick={() => navigate("/leave-approvals")}
+        >
+          <h3 style={{ margin: "10px 0", color: "#ad1457" }}>Leave Approvals</h3>
+          <p style={{ fontSize: "22px", fontWeight: "bold", color: "#000" }}>
+            5 Pending
+          </p>
+          <small style={{ color: "#666" }}>Weekly count</small>
+        </div>
+
+        {/* Task Status */}
+        <div
+          style={{
+            flex: 1,
+            margin: "10px",
+            padding: "20px",
+            borderRadius: "12px",
+            background: "#e8f5e9",
+            boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+            cursor: "pointer",
+            textAlign: "center",
+          }}
+          onClick={() => navigate("/task-status")}
+        >
+          <h3 style={{ margin: "10px 0", color: "#2e7d32" }}>Task Status</h3>
+          <p style={{ fontSize: "18px", fontWeight: "bold", color: "#000" }}>
+            ✅ 18 Completed <br /> ⏳ 7 Pending
+          </p>
+          <small style={{ color: "#666" }}>Weekly summary</small>
+        </div>
+      </div>
 
         {/* Filters */}
         <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap", alignItems: "center" }}>
@@ -858,7 +943,7 @@ const styles = {
 };
 
 const modalStyles = {
-  input: { padding: "5px", borderRadius: "5px", border: "1px solid #ccc", width: "100%" },
+  // input: { padding: "5px", borderRadius: "5px", border: "1px solid #ccc", width: "100%" },
   select: { padding: "5px", borderRadius: "5px", border: "1px solid #ccc" },
   button: { padding: "5px 10px", borderRadius: "5px", border: "none", background: "#007bff", color: "#fff", cursor: "pointer" },
   chartContainer: { padding: "15px", borderRadius: "10px", marginBottom: "20px" },

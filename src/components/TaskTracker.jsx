@@ -157,7 +157,7 @@ const paginationBtnStyle = {
     
   <div style={{ padding: "2rem", background: "#f9f9f9", borderRadius: "10px", boxShadow: "0 2px 10px rgba(0,0,0,0.1)" }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-    <h2 style={{ color: "#333" }}>📊 Task Tracker</h2>
+    <h2 style={{ color: "#333" }}></h2>
     <Link
       to="/home"
       style={{
