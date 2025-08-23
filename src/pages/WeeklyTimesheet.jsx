@@ -85,7 +85,7 @@ const [loadingHistory, setLoadingHistory] = useState(true);
   try {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
       const token = user?.token;
-    const res = await fetch("http://localhost:3000/api/shifts/my", {
+    const res = await fetch("API_BASE/shifts/my", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -191,7 +191,7 @@ const applyShiftWorking = async (e) => {
     setLoading(true);
     const user = JSON.parse(localStorage.getItem("user") || "{}");
       const token = user?.token;
-    const res = await fetch("http://localhost:3000/api/shifts/apply", {
+    const res = await fetch("API_BASE/shifts/apply", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
