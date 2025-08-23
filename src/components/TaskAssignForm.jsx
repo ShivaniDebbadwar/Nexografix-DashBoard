@@ -1,30 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
 const TaskAssignForm = () => {
   const [form, setForm] = useState({
     employeeName: "",
-    assignedTo: "", // employee _id
+    assignedTo: "",
     taskName: "",
     description: "",
-    fileURL: "",
     assignedDate: new Date().toISOString().split("T")[0],
     assignedTime: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     submissionDate: "",
     submissionTime: "",
   });
 
+  // Dynamic file rows (PDF + Excel)
+  const [fileRows, setFileRows] = useState([{ pdfUrl: "", excelUrl: "" }]);
+
   const [employees, setEmployees] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = "https://nexografix-srv.onrender.com"; // change to your backend URL
+  const API_BASE = "https://nexografix-srv.onrender.com";
 
-  // Fetch employees from backend
+  // Fetch employees
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
         const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const token = user?.token;
+        const token = user?.token;
         const res = await fetch(`${API_BASE}/api/userGet`, {
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
         });
@@ -46,6 +49,22 @@ const TaskAssignForm = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // File row functions
+  const handleFileRowChange = (index, field, value) => {
+    const newRows = [...fileRows];
+    newRows[index][field] = value;
+    setFileRows(newRows);
+  };
+
+  const handleAddRow = () => {
+    setFileRows([...fileRows, { pdfUrl: "", excelUrl: "" }]);
+  };
+
+  const handleDeleteRow = (index) => {
+    const newRows = fileRows.filter((_, i) => i !== index);
+    setFileRows(newRows);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -53,7 +72,9 @@ const TaskAssignForm = () => {
     if (!form.assignedTo) return alert("Please select an employee from the list");
     if (!form.taskName) return alert("Task name is required");
     if (!form.description) return alert("Task description is required");
-    if (!form.fileURL) return alert("File URL is required");
+    if (fileRows.length === 0 || fileRows.some(row => !row.pdfUrl || !row.excelUrl)) {
+      return alert("Please provide both PDF and Excel file URLs");
+    }
     if (!form.submissionDate) return alert("Submission date is required");
     if (!form.submissionTime) return alert("Submission time is required");
 
@@ -65,7 +86,7 @@ const TaskAssignForm = () => {
         description: form.description,
         employeeName: form.employeeName,
         assignedTo: form.assignedTo,
-        fileUrl: form.fileURL,
+        fileRows, // new field instead of fileURL
         assignedDate: form.assignedDate,
         assignedTime: form.assignedTime,
         submissionDate: form.submissionDate,
@@ -81,21 +102,17 @@ const TaskAssignForm = () => {
       if (!res.ok) throw new Error(await res.text());
 
       alert("✅ Task assigned successfully and email sent to employee!");
-      const now = new Date();
-const pad = (n) => String(n).padStart(2, "0");
-const defaultTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-      // Reset form
       setForm({
         employeeName: "",
         assignedTo: "",
         taskName: "",
         description: "",
-        fileURL: "",
         assignedDate: new Date().toISOString().split("T")[0],
-        assignedTime: defaultTime,
+        assignedTime: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         submissionDate: "",
         submissionTime: "",
       });
+      setFileRows([{ pdfUrl: "", excelUrl: "" }]);
     } catch (err) {
       alert("❌ Error assigning task: " + err.message);
     } finally {
@@ -105,26 +122,27 @@ const defaultTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
   return (
     <div style={styles.wrapper}>
-       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-          <h2 style={{ color: "#333" }}>📊 Task Tracker</h2>
-          <Link
-            to="/home"
-            style={{
-              padding: "8px 16px",
-              borderRadius: "6px",
-              background: "#007bff",
-              color: "#fff",
-              textDecoration: "none",
-              textAlign: "center",
-              cursor: "pointer"
-            }}
-          >
-            ⬅ Back to Home
-          </Link>
-        </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <h2 style={{ color: "#333" }}>📊 Task Tracker</h2>
+        <Link
+          to="/home"
+          style={{
+            padding: "8px 16px",
+            borderRadius: "6px",
+            background: "#007bff",
+            color: "#fff",
+            textDecoration: "none",
+            textAlign: "center",
+            cursor: "pointer"
+          }}
+        >
+          ⬅ Back to Home
+        </Link>
+      </div>
       <h2 style={styles.title}>📝 Assign Task</h2>
       <form onSubmit={handleSubmit} style={styles.form}>
-        {/* Employee search & select */}
+
+        {/* Employee Name */}
         <div style={styles.field}>
           <label>
             Employee Name <span style={styles.req}>*</span>
@@ -168,7 +186,7 @@ const defaultTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
           )}
         </div>
 
-        {/* Task name */}
+        {/* Task Name */}
         <div style={styles.field}>
           <label>
             Task Name <span style={styles.req}>*</span>
@@ -176,7 +194,7 @@ const defaultTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
           <input type="text" name="taskName" value={form.taskName} onChange={handleChange} style={styles.input} />
         </div>
 
-        {/* Task description */}
+        {/* Task Description */}
         <div style={styles.fieldFull}>
           <label>
             Task Description <span style={styles.req}>*</span>
@@ -184,25 +202,46 @@ const defaultTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
           <textarea name="description" value={form.description} onChange={handleChange} rows="4" style={styles.textarea}></textarea>
         </div>
 
-        {/* File URL */}
-        <div style={styles.field}>
-          <label>
-            File URL <span style={styles.req}>*</span>
-          </label>
-          <input type="url" name="fileURL" value={form.fileURL} onChange={handleChange} style={styles.input} />
+        {/* File Rows */}
+        <div style={{ flex: "1 1 100%" }}>
+          <label>Files (PDF & Excel) <span style={styles.req}>*</span></label>
+          {fileRows.map((row, index) => (
+            <div key={index} style={{ display: "flex", gap: "10px", marginTop: "10px", alignItems: "center" }}>
+              <input
+                type="url"
+                placeholder="PDF File URL"
+                value={row.pdfUrl}
+                onChange={(e) => handleFileRowChange(index, "pdfUrl", e.target.value)}
+                style={styles.input}
+              />
+              <input
+                type="url"
+                placeholder="Excel File URL"
+                value={row.excelUrl}
+                onChange={(e) => handleFileRowChange(index, "excelUrl", e.target.value)}
+                style={styles.input}
+              />
+              {fileRows.length > 1 && (
+                <button type="button" onClick={() => handleDeleteRow(index)} style={styles.deleteBtn}>❌</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={handleAddRow} style={styles.addBtn}>➕ Add File</button>
         </div>
 
-        {/* Dates & Times */}
+        {/* Assigned Date */}
         <div style={styles.field}>
           <label>Assigned Date</label>
           <input type="date" name="assignedDate" value={form.assignedDate} onChange={handleChange} style={styles.input} />
         </div>
 
+        {/* Assigned Time */}
         <div style={styles.field}>
           <label>Assigned Time</label>
           <input name="assignedTime" value={form.assignedTime} onChange={handleChange} style={styles.input} />
         </div>
 
+        {/* Submission Date */}
         <div style={styles.field}>
           <label>
             Submission Date <span style={styles.req}>*</span>
@@ -210,6 +249,7 @@ const defaultTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
           <input type="date" name="submissionDate" value={form.submissionDate} onChange={handleChange} style={styles.input} />
         </div>
 
+        {/* Submission Time */}
         <div style={styles.field}>
           <label>
             Submission Time <span style={styles.req}>*</span>
@@ -217,7 +257,7 @@ const defaultTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
           <input type="time" name="submissionTime" value={form.submissionTime} onChange={handleChange} style={styles.input} />
         </div>
 
-        {/* Submit button */}
+        {/* Submit Button */}
         <div style={styles.buttonWrapper}>
           <button type="submit" style={styles.submitBtn} disabled={loading}>
             {loading ? "Assigning..." : "Assign Task"}
@@ -264,6 +304,7 @@ const styles = {
     border: "1px solid #ccc",
     fontSize: "1rem",
     marginTop: "5px",
+    flex: 1,
   },
   textarea: {
     padding: "10px",
@@ -273,8 +314,23 @@ const styles = {
     marginTop: "5px",
     resize: "vertical",
   },
-  req: {
-    color: "red",
+  req: { color: "red" },
+  addBtn: {
+    marginTop: "10px",
+    padding: "6px 12px",
+    backgroundColor: "#28a745",
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+  },
+  deleteBtn: {
+    padding: "6px 10px",
+    backgroundColor: "#dc3545",
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
   },
   buttonWrapper: {
     flex: "1 1 100%",
