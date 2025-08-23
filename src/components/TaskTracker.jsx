@@ -236,19 +236,64 @@ const paginationBtnStyle = {
         </tr>
       </thead>
       <tbody>
-        {currentTasks.length === 0 ? (
-          <tr>
-            <td colSpan="7" style={{ textAlign: "center", padding: "12px", color: "#666" }}>No tasks found</td>
-          </tr>
-        ) : (
-          currentTasks.map((task) => (
+  {currentTasks.length === 0 ? (
+    <tr>
+      <td colSpan="7" style={{ textAlign: "center", padding: "12px", color: "#666" }}>
+        No tasks found
+      </td>
+    </tr>
+  ) : (
+    currentTasks.flatMap((task) =>
+      (task.fileRows && task.fileRows.length > 0
+        ? task.fileRows.map((file, idx) => (
+            <tr key={`${task._id}-${file._id}-${idx}`} style={{ borderBottom: "1px solid #eee" }}>
+              <td style={tdStyle}>{task.employeeName}</td>
+              <td style={tdStyle}>{task.title}</td>
+              <td style={tdStyle}>{file.description}</td>
+              <td style={tdStyle}>
+                {file.pdfUrl && (
+                  <a href={file.pdfUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#007bff", marginRight: "8px" }}>
+                    PDF
+                  </a>
+                )}
+                {file.excelUrl && (
+                  <a href={file.excelUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#28a745" }}>
+                    Excel
+                  </a>
+                )}
+              </td>
+              <td style={tdStyle}>{file.assignedDate || task.assignedDate} {file.assignedTime || task.assignedTime}</td>
+              <td style={tdStyle}>{formatDateTime(file.submissionDate || task.submissionDate, file.submissionTime || task.submissionTime)}</td>
+              <td style={tdStyle}>
+                <span
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "20px",
+                    color: "#fff",
+                    backgroundColor:
+                      (file.status || task.status).toLowerCase() === "completed"
+                        ? "#28a745"
+                        : (file.status || task.status).toLowerCase() === "started"
+                        ? "#007bff"
+                        : (file.status || task.status).toLowerCase() === "inprogress"
+                        ? "#ffc107"
+                        : "#6c757d",
+                    display: "inline-block",
+                    fontSize: "0.9rem",
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {file.status || task.status}
+                </span>
+              </td>
+            </tr>
+          ))
+        : [
             <tr key={task._id} style={{ borderBottom: "1px solid #eee" }}>
               <td style={tdStyle}>{task.employeeName}</td>
               <td style={tdStyle}>{task.title}</td>
               <td style={tdStyle}>{task.description}</td>
-              <td style={tdStyle}>
-                {task.fileUrl ? <a href={task.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#007bff" }}>Open</a> : "-"}
-              </td>
+              <td style={tdStyle}>-</td>
               <td style={tdStyle}>{task.assignedDate} {task.assignedTime}</td>
               <td style={tdStyle}>{formatDateTime(task.submissionDate, task.submissionTime)}</td>
               <td style={tdStyle}>
@@ -273,10 +318,12 @@ const paginationBtnStyle = {
                   {task.status}
                 </span>
               </td>
-            </tr>
-          ))
-        )}
-      </tbody>
+            </tr>,
+          ])
+    )
+  )}
+</tbody>
+
     </table>
 
     {/* Pagination */}

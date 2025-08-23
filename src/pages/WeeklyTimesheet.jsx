@@ -67,11 +67,45 @@ export default function WeeklyTimesheet() {
   // weekend working form
   const [weekendDate, setWeekendDate] = useState("");
   const [weekendReason, setWeekendReason] = useState("");
-  const weekendOptions = useMemo(() => getWeekendDatesAround(weekStart), [weekStart]);
+  const weekendOptions = useMemo(() => getSundayDatesForMonth(new Date()), []);
+
+// shift working form
+const [shiftStart, setShiftStart] = useState("");
+const [shiftEnd, setShiftEnd] = useState("");
+const [shiftReason, setShiftReason] = useState("");
+
+const [shiftHistory, setShiftHistory] = useState([]);
+const [loadingHistory, setLoadingHistory] = useState(true);
 
   // history
   const [mySheets, setMySheets] = useState([]);
   const [weekendHistory, setWeekendHistory] = useState([]);
+
+  const fetchShiftHistory = async () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const token = user?.token;
+    const res = await fetch("http://localhost:3000/api/shifts/my", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setShiftHistory(data);
+    } else {
+      console.error("Error fetching history:", data.message);
+    }
+  } catch (err) {
+    console.error("Fetch error:", err);
+  } finally {
+    setLoadingHistory(false);
+  }
+};
+
+useEffect(() => {
+  fetchShiftHistory();
+}, []);
 
   // build grid when week/manager changes
   useEffect(() => {
@@ -135,8 +169,67 @@ export default function WeeklyTimesheet() {
   }
 
   function formatDate(date) {
-    return date.toISOString().split("T")[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+// Handle shift working form submission
+
+const applyShiftWorking = async (e) => {
+  e.preventDefault();
+// validate dates
+  const start = new Date(shiftStart);
+  const end = new Date(shiftEnd);
+
+  if (end < start) {
+    alert("❌ End Date cannot be earlier than Start Date");
+    return;
   }
+  try {
+    setLoading(true);
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const token = user?.token;
+    const res = await fetch("http://localhost:3000/api/shifts/apply", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        startDate: shiftStart,
+        endDate: shiftEnd,
+        reason: shiftReason,
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert("Shift request submitted successfully!");
+      await fetchShiftHistory();
+      setLoading(false);
+      setShiftStart("");
+      setShiftEnd("");
+      setShiftReason("");
+    } else {
+      alert(data.message || "Failed to apply for shift");
+      return;
+    }
+
+
+    alert("Shift request submitted successfully ✅");
+    // clear form after submission
+    setShiftStart("");
+    setShiftEnd("");
+    setShiftReason("");
+  } catch (error) {
+    setLoading(false);
+    console.error("Error applying shift:", error);
+    alert("Something went wrong");
+  }
+};
+
 
   // weekends allowed; only real holidays are blocked
   function generateWeekData(start, mgr = "") {
@@ -387,6 +480,12 @@ export default function WeeklyTimesheet() {
           Weekend Working
         </button>
         <button
+  style={{ ...styles.tab, ...(activeTab === "shift" ? styles.tabActive : {}) }}
+  onClick={() => setActiveTab("shift")}
+>
+  Shift Working
+</button>
+        <button
           style={{ ...styles.tab, ...(activeTab === "history" ? styles.tabActive : {}) }}
           onClick={() => setActiveTab("history")}
         >
@@ -571,7 +670,7 @@ export default function WeeklyTimesheet() {
                 style={styles.input}
                 required
               >
-                <option value="">-- Select Saturday/Sunday --</option>
+                <option value="">-- Select Sunday --</option>
                 {weekendOptions.map((d) => (
                   <option key={d} value={d}>
                     {d}
@@ -588,15 +687,77 @@ export default function WeeklyTimesheet() {
                 required
               />
             </label>
-            <button type="submit" style={styles.submitBtn}>
-              Submit
-            </button>
+            <button type="submit" style={styles.submitBtn} disabled={loading}>
+  {loading ? (
+    <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <span style={styles.loader}></span> Applying...
+    </span>
+  ) : (
+    "Apply Shift"
+  )}
+</button>
+
           </form>
           <p style={{ fontSize: 12, color: "#6c757d", marginTop: 8 }}>
             Your weekend working request will be sent for manager approval.
           </p>
         </div>
       )}
+
+      {activeTab === "shift" && (
+  <div style={styles.card}>
+    <h3>🕓 Apply for Shift Working</h3>
+    <form onSubmit={applyShiftWorking} style={{ display: "grid", gap: 12, marginTop: 12 }}>
+      <label>
+        Start Date <span style={{ color: "red" }}>*</span>
+        <input
+          type="date"
+          value={shiftStart}
+          onChange={(e) => setShiftStart(e.target.value)}
+          style={styles.input}
+          required
+        />
+      </label>
+
+      <label>
+        End Date <span style={{ color: "red" }}>*</span>
+        <input
+          type="date"
+          value={shiftEnd}
+          onChange={(e) => setShiftEnd(e.target.value)}
+          style={styles.input}
+          required
+        />
+      </label>
+
+      <label>
+        Reason <span style={{ color: "red" }}>*</span>
+        <textarea
+          value={shiftReason}
+          onChange={(e) => setShiftReason(e.target.value)}
+          style={{ ...styles.input, height: 90 }}
+          required
+        />
+      </label>
+
+      <button type="submit" style={styles.submitBtn} disabled={loading}>
+  {loading ? (
+    <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <span style={styles.loader}></span> Applying...
+    </span>
+  ) : (
+    "Apply Shift"
+  )}
+</button>
+    </form>
+    <p style={{ fontSize: 12, color: "#6c757d", marginTop: 8 }}>
+      Your shift working request will be sent for manager approval.
+    </p>
+  </div>
+  
+  
+)}
+
 
       {activeTab === "history" && (
         <div style={styles.tableWrapper}>
@@ -656,6 +817,52 @@ export default function WeeklyTimesheet() {
                   )}
                 </tbody>
               </table>
+
+              <h3>📜 My Shift Requests</h3>
+
+  {loadingHistory ? (
+    <p>Loading shift history...</p>
+  ) : shiftHistory.length === 0 ? (
+    <p style={{ color: "#6c757d" }}>No shift requests applied yet.</p>
+  ) : (
+    <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 10 }}>
+      <thead>
+        <tr style={{ background: "#f1f1f1", textAlign: "left" }}>
+          <th style={{ padding: 8, border: "1px solid #ddd" }}>Start Date</th>
+          <th style={{ padding: 8, border: "1px solid #ddd" }}>End Date</th>
+          <th style={{ padding: 8, border: "1px solid #ddd" }}>Reason</th>
+          <th style={{ padding: 8, border: "1px solid #ddd" }}>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {shiftHistory.map((req) => (
+          <tr key={req._id}>
+            <td style={{ padding: 8, border: "1px solid #ddd" }}>
+              {new Date(req.startDate).toLocaleDateString()}
+            </td>
+            <td style={{ padding: 8, border: "1px solid #ddd" }}>
+              {new Date(req.endDate).toLocaleDateString()}
+            </td>
+            <td style={{ padding: 8, border: "1px solid #ddd" }}>{req.reason}</td>
+            <td
+              style={{
+                padding: 8,
+                border: "1px solid #ddd",
+                color:
+                  req.status === "Approved"
+                    ? "green"
+                    : req.status === "Rejected"
+                    ? "red"
+                    : "orange",
+              }}
+            >
+              {req.status}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )}
 
               <h3 style={{ marginTop: 24 }}>Weekend Working</h3>
               <table style={styles.table}>
@@ -779,21 +986,30 @@ export default function WeeklyTimesheet() {
 }
 
 /* ---------- helpers ---------- */
-function getWeekendDatesAround(weekStart) {
+function getSundayDatesForMonth(date) {
   const out = [];
-  const addDate = (d) => out.push(d.toISOString().slice(0, 10));
-  [-7, 0, 7].forEach((offset) => {
-    const start = new Date(weekStart);
-    start.setDate(start.getDate() + offset);
-    const sat = new Date(start);
-    sat.setDate(start.getDate() + 6); // Saturday
-    const sun = new Date(start);
-    sun.setDate(start.getDate() + 0); // Sunday
-    addDate(sun);
-    addDate(sat);
-  });
-  return [...new Set(out)].sort();
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  // Start from 1st of the month
+  const d = new Date(year, month, 1);
+
+  while (d.getMonth() === month) {
+    if (d.getDay() === 0) { // 0 = Sunday
+      // Format as YYYY-MM-DD in local time
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      out.push(`${yyyy}-${mm}-${dd}`);
+    }
+    d.setDate(d.getDate() + 1);
+  }
+
+  return out;
 }
+
+
+
 
 /* ---------- styles ---------- */
 const styles = {
@@ -946,4 +1162,38 @@ popupOverlay: { position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)",
   holidayRow: {
     backgroundColor: "#fff9e6",
   },
+submitBtn: {
+    background: "#007bff",
+    color: "#fff",
+    padding: "10px 20px",
+    border: "none",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontSize: 16,
+  },
+  loader: {
+    border: "4px solid #f3f3f3",
+    borderTop: "4px solid #3498db",
+    borderRadius: "50%",
+    width: 16,
+    height: 16,
+    animation: "spin 1s linear infinite",
+    display: "inline-block",
+    marginRight: 8,
+  }
+
 };
+
+// Inject keyframes for spin animation
+if (typeof document !== "undefined" && !document.getElementById("spin-keyframes")) {
+  const style = document.createElement("style");
+  style.id = "spin-keyframes";
+  style.innerHTML = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+

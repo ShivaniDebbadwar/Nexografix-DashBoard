@@ -71,7 +71,7 @@ const TaskAssignForm = () => {
     // Validation
     if (!form.assignedTo) return alert("Please select an employee from the list");
     if (!form.taskName) return alert("Task name is required");
-    if (!form.description) return alert("Task description is required");
+    // if (!form.description) return alert("Task description is required");
     if (fileRows.length === 0 || fileRows.some(row => !row.pdfUrl || !row.excelUrl)) {
       return alert("Please provide both PDF and Excel file URLs");
     }
@@ -83,7 +83,7 @@ const TaskAssignForm = () => {
     try {
       const payload = {
         title: form.taskName,
-        description: form.description,
+        // description: form.description,
         employeeName: form.employeeName,
         assignedTo: form.assignedTo,
         fileRows, // new field instead of fileURL
@@ -106,7 +106,7 @@ const TaskAssignForm = () => {
         employeeName: "",
         assignedTo: "",
         taskName: "",
-        description: "",
+        // description: "",
         assignedDate: new Date().toISOString().split("T")[0],
         assignedTime: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         submissionDate: "",
@@ -195,12 +195,12 @@ const TaskAssignForm = () => {
         </div>
 
         {/* Task Description */}
-        <div style={styles.fieldFull}>
+        {/* <div style={styles.fieldFull}>
           <label>
             Task Description <span style={styles.req}>*</span>
           </label>
           <textarea name="description" value={form.description} onChange={handleChange} rows="4" style={styles.textarea}></textarea>
-        </div>
+        </div> */}
 
         {/* File Rows */}
         <div style={{ flex: "1 1 100%" }}>
@@ -221,6 +221,8 @@ const TaskAssignForm = () => {
                 onChange={(e) => handleFileRowChange(index, "excelUrl", e.target.value)}
                 style={styles.input}
               />
+              <input name="description" value={row.description}  onChange={(e) => handleFileRowChange(index, "description", e.target.value)} rows="4" style={styles.textarea} placeholder="No of Images"></input>
+       
               {fileRows.length > 1 && (
                 <button type="button" onClick={() => handleDeleteRow(index)} style={styles.deleteBtn}>❌</button>
               )}

@@ -974,12 +974,12 @@ export default function EmployeeDashboard() {
                           e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
                         }}
                       >
-                        <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: 600 }}>
+                        
+                        <p style={{ margin: "4px 0", fontSize: "14px", color: "#374151" }}>
+                            <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: 600 }}>
                           {task.taskName || task.title}
                         </h3>
-                        <p style={{ margin: "4px 0", fontSize: "14px", color: "#374151" }}>
-                          <strong>Description:</strong> {task.description}
-                        </p>
+                        
                         <p style={{ margin: "4px 0", fontSize: "14px" }}>
                           <strong>Status:</strong> <span style={{ color: statusColor }}>{task.status}</span>
                         </p>
@@ -990,19 +990,47 @@ export default function EmployeeDashboard() {
                           <strong>Submission:</strong>{" "}
                           {task.submissionDate ? new Date(task.submissionDate).toLocaleString() : "-"}
                         </p>
-                        <p style={{ margin: "4px 0", fontSize: "14px", color: "#374151" }}>
                           <strong>File:</strong>{" "}
-                          {task.fileUrl ? (
-                            <a
-                              href={task.fileUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={{ color: "#2563eb", textDecoration: "underline" }}
-                            >
-                              View
-                            </a>
-                          ) : "-"}
+                          {task.fileRows && task.fileRows.length > 0 ? (
+                            <span>
+                              {task.fileRows.map((file, idx) => (
+
+                                 
+                                
+                                <span key={idx} style={{ marginRight: "12px" }}>
+                                  
+                                  {file.pdfUrl && (
+                                    <a
+                                      href={file.pdfUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      style={{ color: "#2563eb", textDecoration: "underline", marginRight: "8px" }}
+                                    >
+                                      PDF
+                                    </a>
+                                  )}
+                                
+                                  {file.excelUrl && (
+                                    <a
+                                      href={file.excelUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      style={{ color: "#16a34a", textDecoration: "underline" }}
+                                    >
+                                      Excel
+                                    </a>
+                                  )}
+                                  <p style={{ margin: "4px 0", fontSize: "14px", color: "#374151" }}>
+                          <strong>Description:</strong> {file.description}
                         </p>
+                                </span>
+                              ))}
+                            </span>
+                          ) : (
+                            "-"
+                          )}
+                        </p>
+
 
                         {/* Action buttons */}
                         <div style={{ marginTop: "12px", display: "flex", gap: "10px" }}>
