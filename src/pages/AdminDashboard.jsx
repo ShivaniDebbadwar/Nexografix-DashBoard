@@ -116,8 +116,21 @@ const CreateEmployeeModal = React.memo(function CreateEmployeeModal({
             <span>Manager<span style={{ color: "red" }}>*</span></span>
             {/* If you want a free-text manager, keep input; to bind to existing employees, use select below */}
             {/* <input name="manager" value={form.manager} onChange={onFormChange} style={modalStyles.input} required /> */}
-            <input name="manager" autoComplete="off" value={form.manager} onChange={onFormChange} style={modalStyles.input} required />
-
+            {/* <input name="manager" autoComplete="off" value={form.manager} onChange={onFormChange} style={modalStyles.input} required /> */}
+           <select
+    name="manager"
+    value={form.manager}
+    onChange={onFormChange}
+    style={modalStyles.input}
+    required
+  >
+    <option value="">-- Select Manager --</option>
+    {employees.map((emp) => (
+      <option key={emp._id} value={emp._id}>
+        {emp.name}
+      </option>
+    ))}
+  </select>
           </label>
           <label style={modalStyles.field}>
             <span>
@@ -133,6 +146,8 @@ const CreateEmployeeModal = React.memo(function CreateEmployeeModal({
               <option value="">-- Select Role --</option>
               <option value="admin">admin</option>
               <option value="employee">employee</option>
+              <option value="teamLead">Team Lead</option>
+              <option value="productionManager">PM</option>
             </select>
           </label>
 

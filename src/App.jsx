@@ -12,6 +12,8 @@ import IleaveEmployee from "./pages/ILeaveEmployee";
 import EmployeesDailyAttendance from "./components/EmployeesDailyAttendance";
 import TaskAssignForm from "./components/TaskAssignForm";
 import TaskTracker from "./components/TaskTracker"; // Assuming you have a TaskTracker component
+import TeamLeadDashboard from "./pages/TeamLeadDashboard"; // New import for Team Lead Dashboard
+import EmployeeDailyAttendanceTL from "./components/EmployeesDailyAttendanceTL"; // New import for Team Lead's Employee Attendance
 export default function App() {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user")));
   const location = useLocation();
@@ -28,6 +30,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LoginPage onLogin={(u) => setUser(u)} />} />
       <Route path="/home" element={<AdminDashboard />} />
+      <Route path="/home1" element={<TeamLeadDashboard />} />
       <Route path="/change-password" element={<ChangePassword />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/itime" element={<ITimePage />} />
@@ -37,7 +40,7 @@ export default function App() {
       <Route path="/employee-details" element={<EmployeesDailyAttendance />} />
        <Route path="/task-assign" element={<TaskAssignForm />} />
         <Route path="/task-tracker" element={<TaskTracker />} />
-
+        <Route path="/employeeTeamLead-details" element={<EmployeeDailyAttendanceTL/>} />
       <Route
         path="/admin"
         element={role === "admin" && !forceChange ? <AdminDashboard /> : <Navigate to="/change-password" />}
@@ -45,6 +48,10 @@ export default function App() {
       <Route
         path="/employee"
         element={role === "employee" && !forceChange ? <EmployeeDashboard /> : <Navigate to="/change-password" />}
+      />
+        <Route
+        path="/teamLead"
+        element={role === "teamLead" && !forceChange ? <TeamLeadDashboard /> : <Navigate to="/change-password" />}
       />
     </Routes>
   );
