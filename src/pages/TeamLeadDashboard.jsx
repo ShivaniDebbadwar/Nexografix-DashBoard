@@ -693,12 +693,14 @@ export default function EmployeeDashboard() {
           <button
   onClick={() => navigate("/employeeTeamLead-details")}
   style={{
-    background: "transparent",
-    border: "none",
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: "16px",
-    cursor: "pointer"
+   padding: "8px 14px",
+      borderRadius: 8,
+      background: "linear-gradient(90deg,#6a11cb,#2575fc)",
+      color: "#fff",
+      border: "none",
+      cursor: "pointer",
+      fontWeight: 700,
+      boxShadow: "0 6px 20px rgba(37, 117, 252, 0.3)",
   }}
 >
   Employee Details
