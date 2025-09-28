@@ -1,11 +1,14 @@
 // TeamLeadDashboard.jsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import ReactDOM from "react-dom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 
 const API_BASE = "https://nexografix-srv.onrender.com/api/attendance";
 const API_BASE_TASK = "https://nexografix-srv.onrender.com/api/tasksShown";
+ const API_BASE1 = "https://nexografix-srv.onrender.com";
+const CREATE_EMP_ENDPOINT = `${API_BASE1}/api/users/create`;
 // helpers
 function formatTime(date) {
   if (!date) return "--:--:--";
@@ -20,7 +23,7 @@ function secondsToHHMMSS(sec) {
     .toString()
     .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }
-
+ 
 /**
  * Return styles object depending on theme (isDark boolean)
  */
@@ -307,6 +310,7 @@ export default function EmployeeDashboard() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [popupAction, setPopupAction] = useState(null);
+  const [showCreate, setShowCreate] = useState(false);
   const [popupType, setPopupType] = useState(""); // "start" or "complete"
   const [counts, setCounts] = useState({
     inprogress: 0,
@@ -423,6 +427,35 @@ export default function EmployeeDashboard() {
     }
   }
 
+  // ---- employees list ----
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const token = user?.token;
+      if (!token) return;
+      const res = await fetch(`${API_BASE1}/api/userGet`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) {
+        console.error(`Employees error ${res.status}:`, await res.text());
+        return;
+      }
+      const users = await res.json();
+      const formatted = (users || []).map(u => ({
+        _id: u._id,
+        name: u.username || u.name || u.email,
+      }));
+      setEmployees(formatted);
+    } catch (err) {
+      console.error("Error fetching employees:", err);
+    }
+  }, [token]);
+
+  useEffect(() => { fetchEmployees(); }, [fetchEmployees]);
+
   async function startAttendance() {
     try {
       setLoading(true);
@@ -532,8 +565,265 @@ export default function EmployeeDashboard() {
   };
 
 
+const [employees, setEmployees] = useState([]);
+const CreateEmployeeModal = React.memo(function CreateEmployeeModal({
+  open,
+  onClose,
+  token,
+  employees,
+  onCreated,
+  endpoint
+}) {
+  const [creating, setCreating] = useState(false);
+  const [createErr, setCreateErr] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [datePreset, setDatePreset] = useState("last7");
+  const [month, setMonth] = useState("");
+  const [form, setForm] = useState({
+    userName: "",
+    password: "",
+    email: "",
+    totalEarning: "",
+    manager: "",
+    role: "",
+    domain: "",
+    startDate: "",
 
+  });
 
+  const onFormChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const validateForm = () => {
+    if (!form.userName?.trim()) return "userName is required.";
+    if (!form.password?.trim()) return "password is required.";
+    if (!form.email?.trim()) return "email is required.";
+    if (!/\S+@\S+\.\S+/.test(form.email)) return "email is invalid.";
+    if (form.totalEarning === "") return "total Earning is required.";
+    if (Number.isNaN(Number(form.totalEarning))) return "total Earning must be a number.";
+    if (!form.manager) return "manager is required.";
+    if (!form.role?.trim()) return "role is required.";
+    return "";
+  };
+
+   const initialForm = { userName: "", password: "", email: "", totalEarning: "", manager: "", role: "", domain: "", startDate: "" };
+const resetForm = () => setForm(initialForm);
+
+  const submitCreate = async (e) => {
+    e?.preventDefault();
+    setCreateErr("");
+    const err = validateForm();
+    if (err) return setCreateErr(err);
+
+    setCreating(true);
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username: form.userName.trim(),
+          password: form.password,
+          email: form.email.trim(),
+          totalEarning: Number(form.totalEarning),
+          forceChangePassword: true,
+          manager: form.manager,
+          role: form.role.trim(),
+          domain: form.domain.trim(),
+          dateofJoining: form.startDate || null, // Optional field
+        }),
+      });
+      if (!res.ok) throw new Error((await res.text()) || `Create failed`);
+      onCreated?.();
+     resetForm();                 // ✅ clear fields
+    setShowCreate(false);
+      alert("Employee created successfully.");
+    } catch (err2) {
+      setCreateErr(err2.message || "Something went wrong.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  if (!open) return null;
+  const modalStyles = {
+  // input: { padding: "5px", borderRadius: "5px", border: "1px solid #ccc", width: "100%" },
+  select: { padding: "5px", borderRadius: "5px", border: "1px solid #ccc" },
+  button: { padding: "5px 10px", borderRadius: "5px", border: "none", background: "#007bff", color: "#fff", cursor: "pointer" },
+  chartContainer: { padding: "15px", borderRadius: "10px", marginBottom: "20px" },
+  labelWrap: { display: "flex", alignItems: "center", gap: "6px" },
+  labelText: { fontSize: "12px", fontWeight: 600 },
+  backdrop: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.45)",
+    display: "grid",
+    placeItems: "center",
+    zIndex: 50
+  },
+  modal: {
+    width: "min(560px, 92vw)",
+    background: "linear-gradient(180deg, #f0f4ff 0%, #ffffff 100%)",
+    color: "#000",
+    borderRadius: 16,
+    overflow: "hidden",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+    padding: 0
+  },
+  header: {
+    background: "linear-gradient(90deg, #4f46e5, #3b82f6)",
+    color: "#fff",
+    padding: "14px 18px",
+    fontSize: "18px",
+    fontWeight: 600
+  },
+  body: {
+    padding: "18px",
+    display: "grid",
+    gap: 12
+  },
+  field: {
+    display: "grid",
+    gridTemplateColumns: "160px 1fr",
+    alignItems: "center",
+    gap: 10
+  },
+  input: {
+    padding: "6px 8px",
+    borderRadius: 6,
+    border: "1px solid #cbd5e1",
+    boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
+    outline: "none",
+    transition: "border 0.2s, box-shadow 0.2s"
+  },
+  footer: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 10,
+    padding: "12px 18px",
+    background: "#f9fafb",
+    borderTop: "1px solid #e5e7eb"
+  },
+  cancelBtn: {
+    padding: "6px 12px",
+    borderRadius: 6,
+    border: "none",
+    background: "#9ca3af",
+    color: "#fff",
+    cursor: "pointer",
+    transition: "background 0.2s",
+  },
+  createBtn: {
+    padding: "6px 12px",
+    borderRadius: 6,
+    border: "none",
+    background: "#3b82f6",
+    color: "#fff",
+    cursor: "pointer",
+    transition: "background 0.2s",
+  }
+};
+
+  const modal = (
+    <div style={modalStyles.backdrop} onClick={() => !creating && onClose()}>
+      <div style={modalStyles.modal} onClick={(e) => e.stopPropagation()}>
+        <div style={modalStyles.header}>Create Employee</div>
+        <form onSubmit={submitCreate} style={modalStyles.body} autoComplete="off">
+          <label style={modalStyles.field}>
+            <span>User Name<span style={{ color: "red" }}>*</span></span>
+            <input name="userName" type="text" autoComplete="new-username" value={form.userName} onChange={onFormChange} style={modalStyles.input} required />
+          </label>
+          <label style={modalStyles.field}>
+            <span>Password<span style={{ color: "red" }}>*</span></span>
+            <input name="password" type="password" autoComplete="new-password" value={form.password} onChange={onFormChange} style={modalStyles.input} required />
+          </label>
+          <label style={modalStyles.field}>
+            <span>Email ID<span style={{ color: "red" }}>*</span></span>
+            <input name="email" type="email" autoComplete="off" value={form.email} onChange={onFormChange} style={modalStyles.input} required />
+          </label>
+          <label style={modalStyles.field}>
+            <span>Total Earning<span style={{ color: "red" }}>*</span></span>
+            <input name="totalEarning" autoComplete="off" value={form.totalEarning} onChange={onFormChange} style={modalStyles.input} required />
+          </label>
+          <label style={modalStyles.field}>
+            <span>Manager<span style={{ color: "red" }}>*</span></span>
+            {/* If you want a free-text manager, keep input; to bind to existing employees, use select below */}
+            {/* <input name="manager" value={form.manager} onChange={onFormChange} style={modalStyles.input} required /> */}
+            {/* <input name="manager" autoComplete="off" value={form.manager} onChange={onFormChange} style={modalStyles.input} required /> */}
+           <select
+    name="manager"
+    value={form.manager}
+    onChange={onFormChange}
+    style={modalStyles.input}
+    required
+  >
+    <option value="">-- Select Manager --</option>
+    {employees.map((emp) => (
+      <option key={emp._id} value={emp._id}>
+        {emp.name}
+      </option>
+    ))}
+  </select>
+          </label>
+          <label style={modalStyles.field}>
+            <span>
+              Role<span style={{ color: "red" }}>*</span>
+            </span>
+            <select
+              name="role"
+              value={form.role}
+              onChange={onFormChange}
+              style={modalStyles.input}
+              required
+            >
+              <option value="">-- Select Role --</option>
+              <option value="admin">admin</option>
+              <option value="employee">employee</option>
+              <option value="teamLead">Team Lead</option>
+              <option value="productionManager">PM</option>
+            </select>
+          </label>
+
+          <label style={modalStyles.field}>
+            <span>Domain<span style={{ color: "red" }}>*</span></span>
+            {/* If you want a free-text manager, keep input; to bind to existing employees, use select below */}
+            {/* <input name="manager" value={form.manager} onChange={onFormChange} style={modalStyles.input} required /> */}
+            <input name="domain" autoComplete="off" value={form.domain} onChange={onFormChange} style={modalStyles.input} required />
+
+          </label>
+
+          <label style={modalStyles.field}>
+            <span>
+              Date of Joining<span style={{ color: "red" }}>*</span>
+            </span>
+            <input id="startDate"
+              type="date"
+              name="startDate" // important
+              value={form.startDate} // use form.startDate
+              onChange={onFormChange} // update form state
+              style={modalStyles.input}
+              required />
+          </label>
+
+          {createErr && <div style={{ color: "#b91c1c", fontSize: 13 }}>{createErr}</div>}
+        </form>
+        <div style={modalStyles.footer}>
+          <button type="button" disabled={creating} onClick={() => {resetForm(); setShowCreate(false);}} style={{ ...modalStyles.cancelBtn }}>
+            Cancel
+          </button>
+          <button type="submit" disabled={creating} onClick={submitCreate} style={{ ...modalStyles.createBtn }}>
+            {creating ? "Creating..." : "Create Employee"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return ReactDOM.createPortal(modal, document.body);
+});
 
 
   // Pagination Logic
@@ -699,12 +989,19 @@ export default function EmployeeDashboard() {
       color: "#fff",
       border: "none",
       cursor: "pointer",
-      fontWeight: 700,
-      boxShadow: "0 6px 20px rgba(37, 117, 252, 0.3)",
+      fontWeight: 700
   }}
 >
   Employee Details
 </button>
+  <button style={{padding: "8px 14px",
+      borderRadius: 8,
+      color: "#130a0aff",
+      border: "none",
+      cursor: "pointer",
+      fontWeight: 700,
+      boxShadow: "0 6px 20px rgba(37, 117, 252, 0.3)"}} onClick={() => setShowCreate(true)}>Create Employee</button>
+         
 
         </nav>
 
@@ -745,6 +1042,14 @@ export default function EmployeeDashboard() {
                 </button>
               </div>
             )}
+              <CreateEmployeeModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        token={token}
+        employees={employees}
+        onCreated={fetchEmployees}
+        endpoint={CREATE_EMP_ENDPOINT}
+      />
           </div>
 
           {/* Theme toggle */}

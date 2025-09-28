@@ -52,6 +52,9 @@ const CreateEmployeeModal = React.memo(function CreateEmployeeModal({
     return "";
   };
 
+  const initialForm = { userName: "", password: "", email: "", totalEarning: "", manager: "", role: "", domain: "", startDate: "" };
+const resetForm = () => setForm(initialForm);
+
   const submitCreate = async (e) => {
     e?.preventDefault();
     setCreateErr("");
@@ -80,7 +83,8 @@ const CreateEmployeeModal = React.memo(function CreateEmployeeModal({
       });
       if (!res.ok) throw new Error((await res.text()) || `Create failed`);
       onCreated?.();
-      onClose();
+       resetForm();                 // ✅ clear fields
+    setShowCreate(false);
       alert("Employee created successfully.");
     } catch (err2) {
       setCreateErr(err2.message || "Something went wrong.");
@@ -175,7 +179,7 @@ const CreateEmployeeModal = React.memo(function CreateEmployeeModal({
           {createErr && <div style={{ color: "#b91c1c", fontSize: 13 }}>{createErr}</div>}
         </form>
         <div style={modalStyles.footer}>
-          <button type="button" disabled={creating} onClick={onClose} style={{ ...modalStyles.cancelBtn }}>
+          <button type="button" disabled={creating} onClick={() => {resetForm(); setShowCreate(false);}} style={{ ...modalStyles.cancelBtn }}>
             Cancel
           </button>
           <button type="submit" disabled={creating} onClick={submitCreate} style={{ ...modalStyles.createBtn }}>
@@ -447,6 +451,7 @@ export default function AttendanceSummary() {
   const API_BASE_LOGOUT = "https://nexografix-srv.onrender.com/api/attendance";
   const API_BASE = "https://nexografix-srv.onrender.com";
   const CREATE_EMP_ENDPOINT = `${API_BASE}/api/users/create`;
+  const API_BASE_Test = "https://nexografix-srv.onrender.com";
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -459,6 +464,8 @@ export default function AttendanceSummary() {
   const [month, setMonth] = useState("");
   const [datePreset, setDatePreset] = useState("last7");
   const [darkMode, setDarkMode] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const[LeavependingCount,setLeavePendingCount]=useState(0);
 
   const [showCreate, setShowCreate] = useState(false);
   const profileRef = useRef(null);
@@ -614,6 +621,53 @@ export default function AttendanceSummary() {
       setLoading(false);
     }
   }
+
+ const users = JSON.parse(localStorage.getItem("user") || "{}");
+  const managerName = users?.username || "admin";
+
+useEffect(() => {
+  if (!token) return;
+  if (!managerName) return;
+
+  fetch(`${API_BASE_Test}/api/timesheedetails/manager/${managerName}/approvals`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}` // <-- include token
+    }
+  })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
+    .then(data => setPendingCount(data.count))
+    .catch(err => console.error(err));
+}, [managerName, token]);
+
+//leave pending count
+useEffect(() => {
+  if (!token) return;
+  if (!managerName) return;
+
+  fetch(`${API_BASE_Test}/api/leaves/manager/${managerName}/approvals`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}` // <-- include token
+    }
+  })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
+    .then(data => setLeavePendingCount(data.count))
+    .catch(err => console.error(err));
+}, [managerName, token]);
+
 
   // ---- attendance ----
   const fetchData = useCallback(async () => {
@@ -842,9 +896,8 @@ export default function AttendanceSummary() {
         >
           <h3 style={{ margin: "10px 0", color: "#1565c0" }}>iTime Approvals</h3>
           <p style={{ fontSize: "22px", fontWeight: "bold", color: "#000" }}>
-            12 Pending
+            {pendingCount} Pending
           </p>
-          <small style={{ color: "#666" }}>Weekly count</small>
         </div>
 
         {/* Leave Approvals */}
@@ -863,9 +916,8 @@ export default function AttendanceSummary() {
         >
           <h3 style={{ margin: "10px 0", color: "#ad1457" }}>Leave Approvals</h3>
           <p style={{ fontSize: "22px", fontWeight: "bold", color: "#000" }}>
-            5 Pending
+            {LeavependingCount} Pending
           </p>
-          <small style={{ color: "#666" }}>Weekly count</small>
         </div>
 
         {/* Task Status */}

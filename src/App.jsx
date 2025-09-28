@@ -14,6 +14,8 @@ import TaskAssignForm from "./components/TaskAssignForm";
 import TaskTracker from "./components/TaskTracker"; // Assuming you have a TaskTracker component
 import TeamLeadDashboard from "./pages/TeamLeadDashboard"; // New import for Team Lead Dashboard
 import EmployeeDailyAttendanceTL from "./components/EmployeesDailyAttendanceTL"; // New import for Team Lead's Employee Attendance
+import ApproverTimesheet from "./pages/ApproverTimesheet"; // New import for Approver Timesheet Page
+import LeaveApproval from "./pages/LeaveApproval"; // New import for Leave Approval Component
 export default function App() {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user")));
   const location = useLocation();
@@ -41,6 +43,8 @@ export default function App() {
        <Route path="/task-assign" element={<TaskAssignForm />} />
         <Route path="/task-tracker" element={<TaskTracker />} />
         <Route path="/employeeTeamLead-details" element={<EmployeeDailyAttendanceTL/>} />
+        <Route path="/itime-approvals" element={<ApproverTimesheet/>} />
+        <Route path="/leave-approvals" element={<LeaveApproval/>} />
       <Route
         path="/admin"
         element={role === "admin" && !forceChange ? <AdminDashboard /> : <Navigate to="/change-password" />}

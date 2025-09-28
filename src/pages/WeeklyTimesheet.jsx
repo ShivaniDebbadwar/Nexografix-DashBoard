@@ -371,6 +371,7 @@ const applyShiftWorking = async (e) => {
       await api.post("/timesheet/reopen-request", {
         employeeUsername: username,
         reason: reopenReason,
+        manager: manager,
         date: reopenDate,
       });
       setOk("Reopen request sent to manager.");
